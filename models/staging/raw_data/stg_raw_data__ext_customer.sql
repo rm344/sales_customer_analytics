@@ -2,14 +2,14 @@ with
 
 source as (
 
-    select * from {{ source('bronze', 'ext_customers') }}
+    select * from {{ source('raw_data', 'ext_customer') }}
 
 ),
 
 renamed as (
 
     select
-
+        value
     from source
 
 )

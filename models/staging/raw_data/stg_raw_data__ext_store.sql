@@ -2,14 +2,14 @@ with
 
 source as (
 
-    select * from {{ source('bronze', 'ext_stores') }}
+    select * from {{ source('raw_data', 'ext_store') }}
 
 ),
 
 renamed as (
 
     select
-
+        value as raw_json_payload
     from source
 
 )
