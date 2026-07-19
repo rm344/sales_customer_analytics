@@ -9,16 +9,17 @@
 }}
 
 select
-    metadata$filename                   as _source_file,
-    current_timestamp()::timestamp_ntz  as _loaded_at,
-    '{{ invocation_id }}'               as _batch_id,
-    value:updated_at::timestamp         as file_last_modified,
-    value                               as raw_json_payload
+    metadata$filename                                                  as _source_file,
+    current_timestamp()::timestamp_ntz                                 as _loaded_at,
+    '{{ invocation_id }}'                                              as _batch_id,
+    coalesce(value:updated_at::timestamp, metadata$file_last_modified) as file_last_modified,
+    value                                                              as raw_json_payload
 
 from {{ source(source_name, source_table) }}
 
 {% if is_incremental() %}
-  where value:updated_at::timestamp > (select max(file_last_modified) from {{ this }})
+  where coalesce(value:updated_at::timestamp, metadata$file_last_modified)
+        > (select max(file_last_modified) from {{ this }})
 {% endif %}
 
 {% endmacro %}

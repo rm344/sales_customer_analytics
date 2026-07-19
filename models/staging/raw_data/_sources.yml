@@ -14,7 +14,7 @@ sources:
     tables:
       - name: ext_customer
       - name: ext_employee
-      - name: ext_orders  
+      - name: ext_orders
       - name: ext_store   
       - name: ext_products
         config:
