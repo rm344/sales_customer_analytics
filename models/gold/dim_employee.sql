@@ -1,0 +1,31 @@
+{{ config(materialized='table', schema='gold') }}
+
+select
+    md5(coalesce(cast(employee_id as varchar), '')) as employee_key,
+    employee_id,
+    full_name,
+    email,
+    phone,
+    date_of_birth,
+    hire_date,
+    tenure_years,
+    department,
+    role,
+    employment_status,
+    manager_id,
+    education,
+    salary,
+    performance_rating,
+    current_sales,
+    sales_target,
+    work_location,
+    street,
+    city,
+    state,
+    zip_code,
+    certifications,
+    orders_processed,
+    total_sales_amount,
+    target_achievement_percentage,
+    last_modified_date_clean
+from {{ ref('sil_employee') }}

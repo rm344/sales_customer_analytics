@@ -64,11 +64,6 @@ cleaned as (
 
         initcap(trim(employment_status))                                as employment_status,
 
-        case
-            when sales_target > 0 then round((current_sales * 100 / sales_target), 2)
-            else null
-        end                                                             as target_achievement_percentage,
-
         upper(trim(manager_id))                                         as manager_id,
         initcap(trim(education))                                        as education,
         salary,
@@ -84,6 +79,49 @@ cleaned as (
         last_modified_date_clean
 
     from extracted
+),
+
+orders_deduped as (
+    -- snp_orders is line-item grain (order_items flattened); collapse to
+    -- one row per order before aggregating, else total_amount gets
+    -- counted once per line item instead of once per order
+    select
+        raw_json_payload:employee_id::string  as employee_id,
+        raw_json_payload:order_id::string     as order_id,
+        raw_json_payload:total_amount::float  as total_amount
+    from {{ ref('snp_orders') }}
+    where dbt_valid_to is null
+      and raw_json_payload:employee_id::string is not null
+    qualify row_number() over (
+        partition by raw_json_payload:order_id::string
+        order by _loaded_at desc
+    ) = 1
+),
+
+order_metrics as (
+    select
+        employee_id,
+        count(distinct order_id)         as orders_processed,
+        sum(coalesce(total_amount, 0))   as total_sales_amount
+    from orders_deduped
+    group by employee_id
+),
+
+final as (
+    select
+        c.*,
+        coalesce(om.orders_processed, 0)             as orders_processed,
+        round(coalesce(om.total_sales_amount, 0), 2) as total_sales_amount,
+
+        case
+            when c.sales_target > 0
+            then round((coalesce(om.total_sales_amount, 0) * 100 / c.sales_target), 2)
+            else null
+        end as target_achievement_percentage
+
+    from cleaned c
+    left join order_metrics om
+        on c.employee_id = om.employee_id
 )
 
-select * from cleaned
+select * from final

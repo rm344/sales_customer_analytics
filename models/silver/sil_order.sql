@@ -8,6 +8,7 @@ extracted as (
     select
         order_id_clean                                          as order_id,
         product_id_clean                                        as product_id,
+        item_index,
         raw_json_payload:customer_id::string                     as customer_id,
         raw_json_payload:employee_id::string                     as employee_id,
         raw_json_payload:store_id::string                        as store_id,
@@ -36,7 +37,7 @@ extracted as (
         last_modified_date_clean
     from source_data,
          lateral flatten(input => raw_json_payload:order_items) item
-    where item.value:product_id::string = product_id_clean
+    where item.index = item_index
 ),
 
 calculated as (
@@ -56,6 +57,7 @@ final as (
     select
         order_id,
         product_id,
+        item_index,
         customer_id,
         employee_id,
         store_id,

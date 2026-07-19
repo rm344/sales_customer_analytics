@@ -3,7 +3,7 @@
 {{
     config(
       target_schema='snapshot',
-      unique_key=['order_id_clean', 'product_id_clean'],
+      unique_key=['order_id_clean', 'product_id_clean', 'item_index'],
       strategy='timestamp',
       updated_at='last_modified_date_clean',
       invalidate_hard_deletes=True
@@ -25,6 +25,7 @@ extracted as (
     select
         order_json:order_id::string      as order_id,
         item.value:product_id::string     as product_id,
+        item.index                        as item_index,
         order_json                        as raw_json_payload,
         file_last_modified,
         _batch_id,
@@ -48,7 +49,7 @@ from cleaned
 where order_id_clean is not null and order_id_clean != ''
   and product_id_clean is not null and product_id_clean != ''
 qualify row_number() over (
-    partition by order_id_clean, product_id_clean
+    partition by order_id_clean, product_id_clean, item_index
     order by last_modified_date_clean desc, _loaded_at desc
 ) = 1
 

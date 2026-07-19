@@ -1,7 +1,6 @@
 with source_data as (
     select *
     from {{ ref('snp_customer') }}
-    where dbt_valid_to is null
 ),
 
 extracted as (
@@ -27,7 +26,8 @@ extracted as (
         raw_json_payload:address:state::string                  as state,
         raw_json_payload:address:zip_code::string               as zip_code,
         raw_json_payload:address:country::string                as country,
-        last_modified_date_clean
+        dbt_valid_from,
+        dbt_valid_to
     from source_data
 ),
 
@@ -70,7 +70,9 @@ cleaned as (
         substring(zip_code, 1, 5)                                 as zip_code,
         upper(trim(country))                                      as country,
 
-        last_modified_date_clean
+        dbt_valid_from                                            as valid_from,
+        dbt_valid_to                                              as valid_to,
+        (dbt_valid_to is null)                                    as is_current
 
     from extracted
 )
