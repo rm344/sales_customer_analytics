@@ -11,7 +11,7 @@ models:
         tests:
           - accepted_values:
               arguments:
-                values: ['Young', 'Middle-aged', 'Senior']
+                values: ['Young', 'Middle-aged', 'Senior', 'Unknown']
 
   - name: dim_product
     columns:
