@@ -10,7 +10,7 @@ extracted as (
         raw_json_payload:last_name::string                      as last_name,
         raw_json_payload:email::string                          as email,
         raw_json_payload:phone::string                          as phone,
-        raw_json_payload:birth_date::string                     as birth_date,
+        raw_json_payload:birth_date::string                     as birth_date_raw,
         raw_json_payload:registration_date::string              as registration_date,
         raw_json_payload:last_purchase_date::string             as last_purchase_date,
         raw_json_payload:income_bracket::string                 as income_bracket,
@@ -43,12 +43,21 @@ cleaned as (
 
         regexp_replace(phone, '[^0-9A-Za-z]', '')                       as phone,
 
-        try_to_date(birth_date)                                         as birth_date,
-        datediff(year, try_to_date(birth_date), current_date())         as age,
+        coalesce(
+            try_to_date(birth_date_raw, 'YYYY-MM-DD'),
+            try_to_date(birth_date_raw, 'MM-DD-YYYY'),
+            try_to_date(birth_date_raw, 'DD-MM-YYYY'),
+            try_to_date(birth_date_raw, 'YYYY/MM/DD'),
+            try_to_date(birth_date_raw, 'MM/DD/YYYY'),
+            try_to_date(birth_date_raw, 'DD/MM/YYYY')
+        ) as birth_date_parsed,
+
+        datediff(year, birth_date_parsed, current_date())              as age,
 
         case
-            when datediff(year, try_to_date(birth_date), current_date()) between 18 and 35 then 'Young'
-            when datediff(year, try_to_date(birth_date), current_date()) between 36 and 55 then 'Middle-aged'
+            when birth_date_parsed is null then 'Unknown'
+            when datediff(year, birth_date_parsed, current_date()) between 18 and 35 then 'Young'
+            when datediff(year, birth_date_parsed, current_date()) between 36 and 55 then 'Middle-aged'
             else 'Senior'
         end                                                             as age_segment,
 
@@ -77,4 +86,30 @@ cleaned as (
     from extracted
 )
 
-select * from cleaned
+select
+    customer_id,
+    full_name,
+    email,
+    phone,
+    birth_date_parsed as birth_date,
+    age,
+    age_segment,
+    registration_date,
+    last_purchase_date,
+    income_bracket,
+    loyalty_tier,
+    occupation,
+    preferred_communication,
+    preferred_payment_method,
+    marketing_opt_in,
+    total_purchases,
+    total_spend,
+    street,
+    city,
+    state,
+    zip_code,
+    country,
+    valid_from,
+    valid_to,
+    is_current
+from cleaned

@@ -18,26 +18,42 @@ extracted as (
         raw_json_payload:shipping_date::string                   as shipping_date,
         raw_json_payload:delivery_date::string                   as delivery_date,
         raw_json_payload:estimated_delivery_date::string         as estimated_delivery_date,
-        raw_json_payload:discount_amount::float                  as order_discount_amount,
+        raw_json_payload:discount_amount::float                  as order_discount_amount_raw,
         raw_json_payload:shipping_cost::float                     as shipping_cost,
-        raw_json_payload:tax_amount::float                       as tax_amount,
-        raw_json_payload:total_amount::float                     as order_total_amount,
-        raw_json_payload:order_source::string                    as order_source,
-        raw_json_payload:order_status::string                    as order_status,
-        raw_json_payload:payment_method::string                  as payment_method,
-        raw_json_payload:shipping_method::string                 as shipping_method,
-        raw_json_payload:billing_address:city::string            as billing_city,
-        raw_json_payload:billing_address:state::string           as billing_state,
-        raw_json_payload:shipping_address:city::string           as shipping_city,
-        raw_json_payload:shipping_address:state::string          as shipping_state,
-        item.value:quantity::number                              as quantity,
-        item.value:unit_price::float                             as unit_price,
-        item.value:cost_price::float                             as cost_price,
-        item.value:discount_amount::float                        as item_discount_amount,
+        raw_json_payload:tax_amount::float                        as tax_amount,
+        raw_json_payload:total_amount::float                      as order_total_amount,
+        raw_json_payload:order_source::string                     as order_source,
+        raw_json_payload:order_status::string                     as order_status,
+        raw_json_payload:payment_method::string                   as payment_method,
+        raw_json_payload:shipping_method::string                  as shipping_method,
+        raw_json_payload:billing_address:city::string             as billing_city,
+        raw_json_payload:billing_address:state::string            as billing_state,
+        raw_json_payload:shipping_address:city::string            as shipping_city,
+        raw_json_payload:shipping_address:state::string           as shipping_state,
+        item.value:quantity::number                               as quantity,
+        item.value:unit_price::float                              as unit_price,
+        item.value:cost_price::float                              as cost_price,
+        item.value:discount_amount::float                         as item_discount_amount_raw,
         last_modified_date_clean
     from source_data,
          lateral flatten(input => raw_json_payload:order_items) item
     where item.index = item_index
+),
+
+normalized as (
+    select
+        *,
+        case
+            when item_discount_amount_raw > 1 then item_discount_amount_raw / 100
+            else item_discount_amount_raw
+        end as item_discount_amount,
+
+        case
+            when order_discount_amount_raw > 1 then order_discount_amount_raw / 100
+            else order_discount_amount_raw
+        end as order_discount_amount
+
+    from extracted
 ),
 
 calculated as (
@@ -50,7 +66,7 @@ calculated as (
 
         quantity * unit_price * (1 - item_discount_amount)       as line_revenue,
         quantity * cost_price                                    as line_cost
-    from extracted
+    from normalized
 ),
 
 final as (
