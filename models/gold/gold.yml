@@ -94,7 +94,6 @@ models:
               arguments:
                 to: ref('dim_store')
                 field: store_key
-
       - name: date_key
         tests:
           - relationships:
