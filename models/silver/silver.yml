@@ -1,0 +1,82 @@
+version: 2
+
+models:
+  - name: sil_customer
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+      - name: age_segment
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Young', 'Middle-aged', 'Senior', 'Unknown']
+
+  - name: sil_product
+    columns:
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+      - name: is_low_stock
+        tests:
+          - accepted_values:
+              arguments:
+                values: [true, false]
+
+  - name: sil_employee
+    columns:
+      - name: employee_id
+        tests:
+          - unique
+          - not_null
+      - name: role
+        tests:
+        - accepted_values:
+            arguments:
+              values:
+                - 'Associate'
+                - 'Manager'
+                - 'Senior Manager'
+                - 'Specialist'
+                - 'Cashier'
+                - 'Inventory Specialist'
+                - 'Customer Service Representative'
+              config:
+                severity: warn
+
+  - name: sil_store
+    columns:
+      - name: store_id
+        tests:
+          - unique
+          - not_null
+      - name: size_category
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Small', 'Medium', 'Large']
+      - name: has_performance_issue
+        tests:
+          - accepted_values:
+              arguments:
+                values: [true, false]
+
+  - name: sil_order
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+      - name: product_id
+        tests:
+          - not_null
+      - name: delivery_status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['On Time', 'Delayed', 'Potentially Delayed', 'In Transit']
+      - name: order_time_of_day
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Morning', 'Afternoon', 'Evening', 'Night']
